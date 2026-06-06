@@ -284,7 +284,7 @@ def generate_image(scene: str, idx: int) -> Path:
     if not POLLINATIONS_API_KEY:
         raise ValueError("❌ POLLINATIONS_API_KEY is missing! You MUST set this in your .env file or GitHub Secrets to use the paid API.")
 
-    # Enhanced prompt with complete anti-deformation instructions
+    # Short, clean prompt (no negative inlined — that goes in query param)
     prompt = (
         f"Professional 3D Pixar Disney animation style, ultra high quality 8K render, {scene}, "
         f"perfect symmetrical faces, flawless facial features, anatomically correct proportions, "
@@ -292,25 +292,28 @@ def generate_image(scene: str, idx: int) -> Path:
         f"professional character design, crystal clear details, "
         f"vibrant colorful children's book illustration, cinematic lighting, "
         f"magical forest atmosphere, child-friendly, happy joyful expression, "
-        f"masterpiece quality, sharp focus, beautiful composition, "
-        f"NEGATIVE PROMPT: deformed, disfigured, ugly, bad anatomy, "
-        f"extra limbs, missing limbs, floating limbs, disconnected limbs, "
-        f"mutated hands, poorly drawn hands, malformed hands, "
-        f"poorly drawn face, mutation, deformed face, asymmetric face, "
-        f"blurry, bad proportions, extra fingers, fused fingers, "
-        f"too many fingers, cloned face, duplicate features, "
-        f"disfigured, gross proportions, malformed limbs, "
-        f"extra arms, extra legs, missing arms, missing legs, "
-        f"deformed eyes, cross-eyed, misaligned eyes, extra eyes, "
-        f"deformed mouth, extra mouth, bad teeth, "
-        f"low quality, worst quality, low resolution, distorted"
+        f"masterpiece quality, sharp focus, beautiful composition"
+    )
+    negative_prompt = (
+        "deformed, disfigured, ugly, bad anatomy, "
+        "extra limbs, missing limbs, floating limbs, disconnected limbs, "
+        "mutated hands, poorly drawn hands, malformed hands, "
+        "poorly drawn face, mutation, deformed face, asymmetric face, "
+        "blurry, bad proportions, extra fingers, fused fingers, "
+        "too many fingers, cloned face, duplicate features, "
+        "disfigured, gross proportions, malformed limbs, "
+        "extra arms, extra legs, missing arms, missing legs, "
+        "deformed eyes, cross-eyed, misaligned eyes, extra eyes, "
+        "deformed mouth, extra mouth, bad teeth, "
+        "low quality, worst quality, low resolution, distorted"
     )
     safe_prompt = quote(prompt)
+    safe_negative = quote(negative_prompt)
     
-    # Include seed to ensure unique image
     url = (
         f"https://gen.pollinations.ai/image/{safe_prompt}"
         f"?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&model={IMAGE_MODEL}&seed={seed}&nologo=true"
+        f"&negative_prompt={safe_negative}"
     )
 
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
