@@ -235,14 +235,14 @@ def generate_visual_prompts(story: str) -> list:
     
     prompt = (
         f"Read this {lang_name} self-help text: '{story}'\n"
-        f"Generate exactly {NUM_IMAGES} stickman scene descriptions in ENGLISH "
+        f"Generate exactly {NUM_IMAGES} UNIQUE stickman scene descriptions in ENGLISH "
         f"that visually explain the concepts from the text. "
         f"Each scene shows a CLEAN, WELL-DRAWN stick figure on a soft pastel background doing an action. "
-        f"Make the descriptions vivid and specific about the pose and action. "
-        f"Variety of poses: meditating, climbing, watering a plant, embracing, writing in a journal, "
-        f"releasing a balloon, standing tall, walking through a door. "
-        f"Example: 'Stickman meditating peacefully with glowing thoughts above head, soft blue background' "
-        f"or 'Stickman climbing steps toward a shining star, warm sunset colors behind' "
+        f"Be CREATIVE and make each scene DIFFERENT from any other. "
+        f"Think of original metaphors and actions based on the text. "
+        f"Vary the background colors, the stickman poses, and the symbolic elements. "
+        f"IMPORTANT: No books, no letters, no signs, no labels, no screens, no writing in the scene. "
+        f"No visible text, no words, no letters anywhere. "
         f"Output ONLY {NUM_IMAGES} descriptions, one per line. No numbering."
     )
     
@@ -253,7 +253,7 @@ def generate_visual_prompts(story: str) -> list:
             raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
 
         headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
-        r = requests.get(final_url, params={"model": "openai", "seed": random.randint(1, 1000)}, headers=headers, timeout=60)
+        r = requests.get(final_url, params={"model": "openai", "temperature": 1.3, "seed": random.randint(1, 999999)}, headers=headers, timeout=60)
         
         if r.status_code != 200:
              raise Exception(f"API Error: {r.status_code}")
@@ -288,26 +288,29 @@ def generate_visual_prompts(story: str) -> list:
     print(f"[scenes] Created {len(scenes)} visual descriptions")
     return scenes
 
-def generate_image(scene: str, idx: int) -> Path:
+def generate_image(scene: str, idx: int, topic: str = "") -> Path:
     """Generate stickman image using Pollinations.ai with paid API key."""
-    seed = hash(scene + str(idx)) % 1000000
+    seed = random.randint(1, 999999)
     
     if not POLLINATIONS_API_KEY:
         raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
 
     prompt = (
-        f"Aesthetic clean stick figure illustration, minimalist vector art style, "
-        f"well-proportioned stickman on soft gradient pastel background, {scene}, "
-        f"polished flat design, smooth thin black lines, beautiful minimalist artwork, "
-        f"elegant simple composition, soft calming pastel colors, professional quality"
+        f"Aesthetic clean stick figure illustration, {scene}, "
+        f"minimalist vector art, well-proportioned stickman on soft pastel background, "
+        f"polished flat design, smooth thin black lines, simple beautiful composition. "
+        f"There are no text, no letters, no words, no labels anywhere in this image."
     )
     negative_prompt = (
         "deformed, disfigured, ugly, bad anatomy, extra limbs, "
         "blurry, bad proportions, low quality, low resolution, "
         "photorealistic, 3d render, photograph, hyperrealistic, "
         "cluttered, messy, chaotic, complex background, graffiti, "
-        "scribble, hand-drawn, sketchy, rough, stick figure, "
-        "crude, childish, amateur, pixelated"
+        "scribble, hand-drawn, sketchy, rough, crude, childish, "
+        "amateur, pixelated, realistic face, detailed eyes, shading, "
+        "text, letters, words, characters, typography, labels, captions, "
+        "written text, alphabet, numbers, symbols, "
+        "sign, signage, banner, poster, book text, newspaper, document"
     )
     safe_prompt = quote(prompt)
     safe_negative = quote(negative_prompt)
@@ -315,6 +318,7 @@ def generate_image(scene: str, idx: int) -> Path:
     url = (
         f"https://gen.pollinations.ai/image/{safe_prompt}"
         f"?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&model={IMAGE_MODEL}&seed={seed}&nologo=true"
+        f"&enhance=false"
         f"&negative_prompt={safe_negative}"
     )
 
@@ -352,13 +356,13 @@ def generate_image(scene: str, idx: int) -> Path:
     
     raise Exception(f"Bild {idx+1} konnte nicht generiert werden (API Error)")
 
-def generate_images(scenes: list):
+def generate_images(scenes: list, topic: str = ""):
     """Generate stickman images using Pollinations.ai API."""
     print(f"[image] {NUM_IMAGES} Stickman-Bilder via Pollinations API...")
     images = []
     for i, scene in enumerate(scenes):
         try:
-            img = generate_image(scene, i)
+            img = generate_image(scene, i, topic)
             images.append(img)
         except Exception as e:
             print(f"[image] ⚠️ Bild {i+1} fehlgeschlagen: {e}")
@@ -695,7 +699,7 @@ def main():
     scenes = generate_visual_prompts(story)
     
     # 3. Generate unique images for each scene
-    images = generate_images(scenes)
+    images = generate_images(scenes, topic)
 
     # 4. Generate narration with TTS
     generate_tts(story)
