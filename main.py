@@ -16,9 +16,9 @@ POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY")
 
 # LANGUAGE SETTINGS (Change this for different languages)
 LANGUAGE_CONFIG = {
-    "name": "Russian",          # Language name for prompts
-    "native_name": "на русском языке",   # Native name for instructions
-    "voice": "ru-RU-DmitryNeural", # Edge-TTS voice
+    "name": "Russian",
+    "native_name": "на русском языке",
+    "voice": "ru-RU-SvetlanaNeural",
     "vosk_model": "vosk-model-small-ru-0.22",
     "vosk_url": "https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip",
     "vosk_zip": "vosk-model-ru.zip",
@@ -28,7 +28,7 @@ LANGUAGE_CONFIG = {
 NUM_IMAGES = 8  # 8 unique scenes (faster generation)
 IMAGE_WIDTH = 1080
 IMAGE_HEIGHT = 1920
-IMAGE_MODEL = "flux"
+IMAGE_MODEL = "zimage"
 
 STORY_MAX_WORDS = 130
 
@@ -154,31 +154,30 @@ def choose_topic_for_today():
     return selected_topic
 
 def generate_story_with_pollinations(topic: str) -> str:
-    """Generate a short children's story in the target language."""
+    """Generate a self-help / psychological reflection in Russian for adults."""
     
-    # Use a simpler approach with direct prompt
     base_url = "https://gen.pollinations.ai/text/"
     
     lang_name = LANGUAGE_CONFIG["name"]
-    lang_native = LANGUAGE_CONFIG["native_name"]
     
-    # Prompt in English for story generation
     full_prompt = (
-        f"Write a short children's story in {lang_name} language (ages 3-8) strictly about the topic: {topic}. "
-        f"Do not change the animals or the subject. The story must be exactly about the title. "
-        f"Length: 80-120 words. Simple language. Only the story content, no title."
+        f"Write a short self-help and positive psychology reflection in {lang_name} language "
+        f"on the topic: {topic}. "
+        f"Speak directly to the reader. "
+        f"Be warm, psychologically insightful, and motivating. "
+        f"Incorporate principles from positive psychology, mindfulness, and self-compassion. "
+        f"Give practical, everyday wisdom. "
+        f"Length: 80-120 words. No title. Only the content."
     )
-
     
     url = base_url + quote(full_prompt)
     params = {"model": "openai"}
 
-    print(f"[story] Generating story ({lang_name}): {topic}")
+    print(f"[story] Generating self-help text ({lang_name}): {topic}")
     
     if not POLLINATIONS_API_KEY:
-        raise ValueError("❌ POLLINATIONS_API_KEY is missing! You MUST set this in your .env file or GitHub Secrets to use the paid API.")
+        raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
 
-    # Retry logic for story generation
     max_retries = 3
     headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
     
@@ -190,9 +189,8 @@ def generate_story_with_pollinations(topic: str) -> str:
 
             words = text.split()
             
-            # VALIDATION: Ensure minimum story length to prevent short videos
             if len(words) < 50:
-                print(f"[story] ⚠️ Story too short ({len(words)} words), retrying {attempt + 1}/{max_retries}...")
+                print(f"[story] ⚠️ Too short ({len(words)} words), retrying {attempt + 1}/{max_retries}...")
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     continue
@@ -206,7 +204,7 @@ def generate_story_with_pollinations(topic: str) -> str:
             with open(STORY_FILE, "w", encoding="utf-8") as f:
                 f.write(text)
 
-            print(f"[story] ✅ Story generated ({len(words)} words)")
+            print(f"[story] ✅ Generated ({len(words)} words)")
             return text
             
         except Exception as e:
@@ -214,38 +212,46 @@ def generate_story_with_pollinations(topic: str) -> str:
             if attempt < max_retries - 1:
                 time.sleep(3)
             else:
-                # Fallback with a minimal valid story
-                fallback = f"Жил-был {topic}. Это был прекрасный день. Животные играли вместе в лесу. Они были очень счастливы. Они пели и танцевали. Солнце светило в небе. Птицы летали повсюду. Это было чудесно. Все друзья очень веселились. И они жили долго и счастливо."
-                print(f"[story] ⚠️ Using fallback story")
+                fallback = (
+                    f"Иногда мы забываем, насколько мы сильны на самом деле. {topic} "
+                    f"Можно позволить себе время. Можно сказать нет. "
+                    f"Чувства важны. Потребности имеют значение. "
+                    f"Каждый день — это новый шанс стать ближе к себе. "
+                    f"Будьте нежны с собой. Растите в своём темпе. "
+                    f"Вы достаточны, именно такие, какие есть."
+                )
+                print(f"[story] ⚠️ Using fallback")
                 with open(STORY_FILE, "w", encoding="utf-8") as f:
                     f.write(fallback)
                 return fallback
 
 def generate_visual_prompts(story: str) -> list:
-    """Generate 8 distinct ENGLISH visual descriptions from the story."""
-    print(f"[scenes] Generating visual descriptions in English...")
+    """Generate stickman scene descriptions for self-help content."""
+    print(f"[scenes] Generating stickman scene descriptions in English...")
     
-    # Use POST request for reliable prompt handling
     url = "https://gen.pollinations.ai/text/"
     
     lang_name = LANGUAGE_CONFIG["name"]
     
     prompt = (
-        f"Read this {lang_name} story: '{story}'\n"
-        f"Generate exactly {NUM_IMAGES} detailed, visual image descriptions in ENGLISH based on this story. "
-        f"Describe the animals, expressions, and environment clearly. "
-        f"Make them cute and suitable for a 3D Pixar-style animation. "
-        f"Output ONLY the {NUM_IMAGES} descriptions, one per line. No numbering."
+        f"Read this {lang_name} self-help text: '{story}'\n"
+        f"Generate exactly {NUM_IMAGES} stickman scene descriptions in ENGLISH "
+        f"that visually explain the concepts from the text. "
+        f"Each scene shows a CLEAN, WELL-DRAWN stick figure on a soft pastel background doing an action. "
+        f"Make the descriptions vivid and specific about the pose and action. "
+        f"Variety of poses: meditating, climbing, watering a plant, embracing, writing in a journal, "
+        f"releasing a balloon, standing tall, walking through a door. "
+        f"Example: 'Stickman meditating peacefully with glowing thoughts above head, soft blue background' "
+        f"or 'Stickman climbing steps toward a shining star, warm sunset colors behind' "
+        f"Output ONLY {NUM_IMAGES} descriptions, one per line. No numbering."
     )
     
-    # Simple direct prompt for Pollinations
     final_url = url + quote(prompt)
     
     try:
         if not POLLINATIONS_API_KEY:
-            raise ValueError("❌ POLLINATIONS_API_KEY is missing! You MUST set this in your .env file or GitHub Secrets to use the paid API.")
+            raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
 
-        # Try GET first
         headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
         r = requests.get(final_url, params={"model": "openai", "seed": random.randint(1, 1000)}, headers=headers, timeout=60)
         
@@ -254,21 +260,27 @@ def generate_visual_prompts(story: str) -> list:
              
         text = r.text.strip()
         
-        # Clean up lines
         lines = [line.strip().lstrip('0123456789.- ') for line in text.split('\n') if line.strip()]
         
-        # Ensure we have exactly NUM_IMAGES
         if len(lines) < NUM_IMAGES:
             while len(lines) < NUM_IMAGES:
-                lines.append(lines[-1] + " close up view" if lines else "Cute animal scene")
+                lines.append(lines[-1] + " close up view" if lines else "Stickman in peaceful pose")
         
         scenes = lines[:NUM_IMAGES]
         
     except Exception as e:
         print(f"[scenes] Error generating prompts: {e}")
-        scenes = ["Cute animal in forest"] * NUM_IMAGES
+        scenes = [
+            "Stickman meditating with glowing peaceful thoughts above head, soft blue background",
+            "Stickman looking in a mirror seeing their best self reflected, warm pink background",
+            "Stickman climbing steps toward a shining star, sunset gradient background",
+            "Stickman watering a small plant growing from the ground, soft green background",
+            "Stickman releasing a balloon labeled fear into the sky, lavender background",
+            "Stickman writing goals in a journal at a desk, cozy warm background",
+            "Stickman walking through an open door into bright light, golden background",
+            "Stickman standing tall with arms open wide, soft teal background",
+        ]
 
-    # Save scenes
     with open(SCENES_FILE, "w", encoding="utf-8") as f:
         for i, scene in enumerate(scenes):
             f.write(f"{i+1}. {scene}\n")
@@ -277,35 +289,25 @@ def generate_visual_prompts(story: str) -> list:
     return scenes
 
 def generate_image(scene: str, idx: int) -> Path:
-    """Generate high-quality 3D animated animal image for each scene using Pollinations AI."""
-    # Create unique seed for each image based on scene content + index
+    """Generate stickman image using Pollinations.ai with paid API key."""
     seed = hash(scene + str(idx)) % 1000000
     
     if not POLLINATIONS_API_KEY:
-        raise ValueError("❌ POLLINATIONS_API_KEY is missing! You MUST set this in your .env file or GitHub Secrets to use the paid API.")
+        raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
 
-    # Short, clean prompt (no negative inlined — that goes in query param)
     prompt = (
-        f"Professional 3D Pixar Disney animation style, ultra high quality 8K render, {scene}, "
-        f"perfect symmetrical faces, flawless facial features, anatomically correct proportions, "
-        f"cute adorable animal characters with correct anatomy, "
-        f"professional character design, crystal clear details, "
-        f"vibrant colorful children's book illustration, cinematic lighting, "
-        f"magical forest atmosphere, child-friendly, happy joyful expression, "
-        f"masterpiece quality, sharp focus, beautiful composition"
+        f"Aesthetic clean stick figure illustration, minimalist vector art style, "
+        f"well-proportioned stickman on soft gradient pastel background, {scene}, "
+        f"polished flat design, smooth thin black lines, beautiful minimalist artwork, "
+        f"elegant simple composition, soft calming pastel colors, professional quality"
     )
     negative_prompt = (
-        "deformed, disfigured, ugly, bad anatomy, "
-        "extra limbs, missing limbs, floating limbs, disconnected limbs, "
-        "mutated hands, poorly drawn hands, malformed hands, "
-        "poorly drawn face, mutation, deformed face, asymmetric face, "
-        "blurry, bad proportions, extra fingers, fused fingers, "
-        "too many fingers, cloned face, duplicate features, "
-        "disfigured, gross proportions, malformed limbs, "
-        "extra arms, extra legs, missing arms, missing legs, "
-        "deformed eyes, cross-eyed, misaligned eyes, extra eyes, "
-        "deformed mouth, extra mouth, bad teeth, "
-        "low quality, worst quality, low resolution, distorted"
+        "deformed, disfigured, ugly, bad anatomy, extra limbs, "
+        "blurry, bad proportions, low quality, low resolution, "
+        "photorealistic, 3d render, photograph, hyperrealistic, "
+        "cluttered, messy, chaotic, complex background, graffiti, "
+        "scribble, hand-drawn, sketchy, rough, stick figure, "
+        "crude, childish, amateur, pixelated"
     )
     safe_prompt = quote(prompt)
     safe_negative = quote(negative_prompt)
@@ -317,52 +319,75 @@ def generate_image(scene: str, idx: int) -> Path:
     )
 
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
-    print(f"[image] Generating 3D image {idx+1}/{NUM_IMAGES} (Paid API): {scene[:50]}...")
+    print(f"[image] Bild {idx+1}/{NUM_IMAGES} generieren (API): {scene[:45]}...")
     
-    
-    # Retry logic with exponential backoff (longer waits for rate limits)
-    max_retries = 5
     headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
     
-    for attempt in range(max_retries):
+    for attempt in range(5):
         try:
             r = requests.get(url, headers=headers, timeout=180)
+            if r.status_code == 402:
+                print(f"[image] 402 - warte 30s und wiederhole...")
+                time.sleep(30)
+                continue
             r.raise_for_status()
+            if len(r.content) < 1000:
+                raise ValueError("Image too small")
             out.write_bytes(r.content)
-            time.sleep(2)  # Small delay between successful requests
+            print(f"[image] ✅ Bild {idx+1}: {len(r.content)//1024}KB")
+            time.sleep(3)
             return out
         except requests.exceptions.HTTPError as e:
-            # Handle 429 rate limits with much longer waits
-            if e.response.status_code == 429:
-                wait_time = (attempt + 1) * 20  # 20, 40, 60, 80, 100 seconds
-                if attempt < max_retries - 1:
-                    print(f"[image] Rate limited! Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                    time.sleep(wait_time)
-                else:
-                    print(f"[image] Failed to generate image {idx+1}: Rate limit exceeded")
-                    raise e
-            else:
-                wait_time = (attempt + 1) * 5
-                if attempt < max_retries - 1:
-                    print(f"[image] HTTP {e.response.status_code}. Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                    time.sleep(wait_time)
-                else:
-                    print(f"[image] Failed to generate image {idx+1}: {e}")
-                    raise e
+            if e.response.status_code == 402:
+                print(f"[image] 402 - warte 30s und wiederhole...")
+                time.sleep(30)
+                continue
+            if attempt < 4:
+                time.sleep((attempt + 1) * 10)
         except Exception as e:
-            wait_time = (attempt + 1) * 5
-            if attempt < max_retries - 1:
-                print(f"[image] Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                time.sleep(wait_time)
+            if attempt < 4:
+                time.sleep((attempt + 1) * 10)
             else:
-                print(f"[image] Failed to generate image {idx+1}: {e}")
-                raise e
-    return out
+                break
+    
+    raise Exception(f"Bild {idx+1} konnte nicht generiert werden (API Error)")
 
 def generate_images(scenes: list):
-    """Generate unique 3D animated images for each scene SEQUENTIALLY (avoids rate limits)"""
-    print(f"[image] Generating {NUM_IMAGES} 3D images sequentially (avoiding rate limits)...")
-    return [generate_image(scene, i) for i, scene in enumerate(scenes)]
+    """Generate stickman images using Pollinations.ai API."""
+    print(f"[image] {NUM_IMAGES} Stickman-Bilder via Pollinations API...")
+    images = []
+    for i, scene in enumerate(scenes):
+        try:
+            img = generate_image(scene, i)
+            images.append(img)
+        except Exception as e:
+            print(f"[image] ⚠️ Bild {i+1} fehlgeschlagen: {e}")
+            from PIL import Image, ImageDraw, ImageFont, ImageFilter
+            placeholder = IMAGES_DIR / f"scene_{i:02d}.jpg"
+            img = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), (255, 255, 255))
+            draw = ImageDraw.Draw(img)
+            palettes = [(210, 230, 255), (255, 220, 230), (220, 255, 220), (255, 230, 200), (230, 220, 255), (255, 240, 210), (210, 240, 240), (240, 220, 240)]
+            r1, g1, b1 = palettes[i % 8]
+            r2 = min(r1 + 60, 255); g2 = min(g1 + 50, 255); b2 = min(b1 + 40, 255)
+            for y in range(IMAGE_HEIGHT):
+                t = y / IMAGE_HEIGHT
+                r = int(r1 + (r2 - r1) * t)
+                g = int(g1 + (g2 - g1) * t)
+                b = int(b1 + (b2 - b1) * t)
+                draw.line([(0, y), (IMAGE_WIDTH, y)], fill=(r, g, b))
+            img = img.filter(ImageFilter.GaussianBlur(radius=5))
+            draw = ImageDraw.Draw(img)
+            try:
+                font = ImageFont.truetype("arial.ttf", 48)
+            except Exception:
+                font = ImageFont.load_default()
+            draw.text((IMAGE_WIDTH//2 - 250, IMAGE_HEIGHT//2 - 30), f"Scene {i+1}", fill=(80, 60, 120), font=font)
+            img.save(str(placeholder), 'JPEG', quality=90)
+            images.append(placeholder)
+            print(f"[image] Platzhalter {i+1} erstellt")
+    if not images:
+        raise Exception("Keine Bilder konnten generiert werden!")
+    return images
 
 def generate_tts(story: str):
     """Generate narration using edge-tts (free Microsoft TTS)."""
@@ -451,14 +476,14 @@ def generate_word_subtitles():
     
     font_name = LANGUAGE_CONFIG.get("subtitle_font", "Arial")
     
-    # Create ASS subtitle file with kid-friendly styling
+    # Create ASS subtitle file - white bold text with thick black outline
     ass_content = f"""[Script Info]
-Title: Children's Story
+Title: Self-Help
 ScriptType: v4.00+
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{font_name},20,&H00FFFF00,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,5,10,10,60,1
+Style: Default,{font_name},16,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,3,0,2,10,10,80,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -630,10 +655,33 @@ def merge_audio():
     subprocess.run(cmd, check=True)
     print(f"[merge] Final video saved to {FINAL_VIDEO}")
 
+def generate_topic() -> str:
+    """Generate a random self-help topic using AI."""
+    url = "https://gen.pollinations.ai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}", "Content-Type": "application/json"}
+    payload = {
+        "model": "openai",
+        "messages": [
+            {"role": "system", "content": "You output ONLY the topic, nothing else."},
+            {"role": "user", "content": "Generate a short, memorable self-help and positive psychology topic in Russian for anyone. For example: 'Сила маленьких шагов' or 'Как полюбить себя'. ONLY the topic, no explanation, no extra text."}
+        ]
+    }
+    for attempt in range(3):
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=30)
+            if r.status_code == 200:
+                topic = r.json()["choices"][0]["message"]["content"].strip().strip('"').strip("'")
+                if topic:
+                    return topic
+        except Exception as e:
+            print(f"[topic] Error: {e}")
+            time.sleep(2)
+    return "Сила маленьких шагов в повседневной жизни"
+
 def main():
     ensure_dirs()
 
-    topic = choose_topic_for_today()
+    topic = generate_topic()
     print("=" * 60)
     print(f"=== Topic: {topic}")
     print("=" * 60)
