@@ -171,7 +171,7 @@ def generate_story_with_pollinations(topic: str) -> str:
     )
     
     url = base_url + quote(full_prompt)
-    params = {"model": "openai"}
+    params = {"model": "openai", "seed": random.randint(1, 99999), "temperature": 1.3}
 
     print(f"[story] Generating self-help text ({lang_name}): {topic}")
     
@@ -661,9 +661,11 @@ def generate_topic() -> str:
     headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}", "Content-Type": "application/json"}
     payload = {
         "model": "openai",
+        "temperature": 1.5,
+        "seed": random.randint(1, 999999),
         "messages": [
             {"role": "system", "content": "You output ONLY the topic, nothing else."},
-            {"role": "user", "content": "Generate a short, memorable self-help and positive psychology topic in Russian for anyone. For example: 'Сила маленьких шагов' or 'Как полюбить себя'. ONLY the topic, no explanation, no extra text."}
+            {"role": "user", "content": "Generate a short, memorable self-help and positive psychology topic in Russian for anyone. Be creative and varied. For example: 'Сила маленьких шагов' or 'Как полюбить себя'. ONLY the topic, no explanation, no extra text."}
         ]
     }
     for attempt in range(3):
