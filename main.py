@@ -720,31 +720,6 @@ def merge_audio():
     subprocess.run(cmd, check=True)
     print(f"[merge] Final video saved to {FINAL_VIDEO}")
 
-def generate_topic() -> str:
-    """Generate a random self-help topic using AI."""
-    url = "https://gen.pollinations.ai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}", "Content-Type": "application/json"}
-    payload = {
-        "model": "openai",
-        "temperature": 1.5,
-        "seed": random.randint(1, 999999),
-        "messages": [
-            {"role": "system", "content": "You output ONLY the topic, nothing else."},
-            {"role": "user", "content": "Generate a short, memorable self-help and positive psychology topic in Russian for anyone. Be creative and varied. For example: 'Сила маленьких шагов' or 'Как полюбить себя'. ONLY the topic, no explanation, no extra text."}
-        ]
-    }
-    for attempt in range(3):
-        try:
-            r = requests.post(url, headers=headers, json=payload, timeout=30)
-            if r.status_code == 200:
-                topic = r.json()["choices"][0]["message"]["content"].strip().strip('"').strip("'")
-                if topic:
-                    return topic
-        except Exception as e:
-            print(f"[topic] Error: {e}")
-            time.sleep(2)
-    return "Сила маленьких шагов в повседневной жизни"
-
 def main():
     ensure_dirs()
 
