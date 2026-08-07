@@ -116,41 +116,100 @@ def refill_topics_if_needed():
     save_topics_to_file(combined, filename=TOPICS_FILE)
     print(f"[topics] ✅ Refilled: now have {len(combined)} topics")
 
-def choose_topic_for_today():
-    if not os.path.exists(TOPICS_FILE):
-        print(f"[topics] {TOPICS_FILE} not found!")
-        refill_topics_if_needed()
+def get_all_used_topics():
+    """Get all previously used topics to prevent duplicates."""
+    used = set()
+    if os.path.exists("used_topics.txt"):
+        with open("used_topics.txt", "r", encoding="utf-8") as f:
+            for line in f:
+                if ": " in line:
+                    topic = line.split(": ", 1)[1].strip()
+                    used.add(topic.lower())
+                else:
+                    used.add(line.strip().lower())
+    return used
 
-    with open(TOPICS_FILE, "r", encoding="utf-8") as f:
-        topics = [line.strip() for line in f if line.strip()]
-    if not topics:
-        print("[topics] No topics found! Using fallback.")
-        return "Маленький медвежонок в лесу"
-    
-    # 1. Select the top topic
-    selected_topic = topics[0]
-    print(f"[topics] ✅ Selected topic: {selected_topic}")
-    print(f"[topics] 📊 Remaining topics in topics.txt: {len(topics) - 1}")
-    
-    # 2. Save to used topics history
+def choose_topic_for_today():
+    """Select and consume a topic from topics.txt. Auto-generates new unique topics when running low."""
+    if not os.path.exists(TOPICS_FILE):
+        print(f"[topics] {TOPICS_FILE} not found! Generating initial topics...")
+        from generate_topics import generate_russian_selfhelp_topics, save_topics_to_file
+        new_topics = generate_russian_selfhelp_topics(100)
+        save_topics_to_file(new_topics)
+
     try:
-        with open("used_topics.txt", "a", encoding="utf-8") as f:
-            f.write(f"{selected_topic}\n")
-        print(f"[topics] ✅ Topic added to used_topics.txt")
+        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
+            topics = [line.strip() for line in f if line.strip()]
+        print(f"[topics] Loaded {len(topics)} topics")
     except Exception as e:
-        print(f"[topics] ⚠️ Error writing to used_topics.txt: {e}")
-    
-    # 3. Remove from topics.txt (rewrite file without the first line)
+        print(f"[topics] ERROR reading {TOPICS_FILE}: {e}")
+        return "Самопомощь и позитивная психология"
+
+    if len(topics) < 30:
+        print(f"[topics] Only {len(topics)} topics left. Generating 100 new unique topics...")
+        from generate_topics import generate_russian_selfhelp_topics
+
+        used_topics = get_all_used_topics()
+        existing_topics_lower = set(t.lower() for t in topics)
+        all_existing = used_topics.union(existing_topics_lower)
+
+        print(f"[topics] Already used/existing: {len(all_existing)} topics")
+        attempts = 0
+        new_unique_topics = []
+        while len(new_unique_topics) < 100 and attempts < 5:
+            batch = generate_russian_selfhelp_topics(150)
+            for topic in batch:
+                if topic.lower() not in all_existing:
+                    new_unique_topics.append(topic)
+                    all_existing.add(topic.lower())
+                    if len(new_unique_topics) >= 100:
+                        break
+            attempts += 1
+
+        print(f"[topics] Generated {len(new_unique_topics)} unique new topics (0 duplicates)")
+        topics.extend(new_unique_topics)
+        try:
+            with open(TOPICS_FILE, "w", encoding="utf-8") as f:
+                f.write("\n".join(topics) + "\n")
+                f.flush()
+                os.fsync(f.fileno())
+            print(f"[topics] Now {len(topics)} topics available")
+        except Exception as e:
+            print(f"[topics] ERROR saving new topics: {e}")
+
+    if not topics:
+        print("[topics] No topics available! Using fallback.")
+        return "Самопомощь и позитивная психология"
+
+    selected_topic = topics[0]
+    remaining_topics = topics[1:]
+
+    print(f"[topics] Topic selected: {selected_topic}")
+    print(f"[topics] Remaining: {len(remaining_topics)}")
+
     try:
         with open(TOPICS_FILE, "w", encoding="utf-8") as f:
-            f.write("\n".join(topics[1:]) + "\n")
-        print(f"[topics] ✅ Topic removed from topics.txt")
+            f.write("\n".join(remaining_topics) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
+            verification = [line.strip() for line in f if line.strip()]
+        if selected_topic in verification:
+            print(f"[topics] WARNING: Topic still in file after removal!")
+        else:
+            print(f"[topics] Topic successfully removed from topics.txt")
     except Exception as e:
-        print(f"[topics] ⚠️ Error updating topics.txt: {e}")
-    
-    # 4. Auto-refill if running low
-    refill_topics_if_needed()
-    
+        print(f"[topics] ERROR updating {TOPICS_FILE}: {e}")
+
+    try:
+        today = datetime.datetime.now()
+        with open("used_topics.txt", "a", encoding="utf-8") as f:
+            f.write(f"{today.strftime('%Y-%m-%d')}: {selected_topic}\n")
+            f.flush()
+        print(f"[topics] Topic logged to used_topics.txt")
+    except Exception as e:
+        print(f"[topics] WARNING: Could not log topic: {e}")
+
     return selected_topic
 
 def generate_story_with_pollinations(topic: str) -> str:
@@ -288,81 +347,83 @@ def generate_visual_prompts(story: str) -> list:
     print(f"[scenes] Created {len(scenes)} visual descriptions")
     return scenes
 
-def generate_image(scene: str, idx: int, topic: str = "") -> Path:
-    """Generate stickman image using Pollinations.ai with paid API key."""
-    seed = random.randint(1, 999999)
-    
-    if not POLLINATIONS_API_KEY:
-        raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
-
-    prompt = (
-        f"Aesthetic clean stick figure illustration, {scene}, "
-        f"minimalist vector art, well-proportioned stickman on soft pastel background, "
-        f"polished flat design, smooth thin black lines, simple beautiful composition. "
-        f"There are no text, no letters, no words, no labels anywhere in this image."
-    )
-    negative_prompt = (
-        "deformed, disfigured, ugly, bad anatomy, extra limbs, "
-        "blurry, bad proportions, low quality, low resolution, "
-        "photorealistic, 3d render, photograph, hyperrealistic, "
-        "cluttered, messy, chaotic, complex background, graffiti, "
-        "scribble, hand-drawn, sketchy, rough, crude, childish, "
-        "amateur, pixelated, realistic face, detailed eyes, shading, "
-        "text, letters, words, characters, typography, labels, captions, "
-        "written text, alphabet, numbers, symbols, "
-        "sign, signage, banner, poster, book text, newspaper, document"
-    )
-    safe_prompt = quote(prompt)
-    safe_negative = quote(negative_prompt)
-    
-    url = (
-        f"https://gen.pollinations.ai/image/{safe_prompt}"
-        f"?width={IMAGE_WIDTH}&height={IMAGE_HEIGHT}&model={IMAGE_MODEL}&seed={seed}&nologo=true"
-        f"&enhance=false"
-        f"&negative_prompt={safe_negative}"
-    )
+def download_image_from_drive(idx: int) -> Path:
+    """Pick a random stickman image from Google Drive folder (weighted by least-used)."""
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
 
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
-    print(f"[image] Bild {idx+1}/{NUM_IMAGES} generieren (API): {scene[:45]}...")
-    
-    headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
-    
-    for attempt in range(5):
+
+    service_key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY")
+    folder_id = os.environ.get(
+        "GOOGLE_DRIVE_FOLDER_ID",
+        "1E9NZSg5Ef-bcRIwMVcrJ-KsrmG0R1Zgv",
+    ).strip().strip('"').strip("'")
+    if not service_key:
+        raise ValueError("GOOGLE_SERVICE_ACCOUNT_KEY environment variable required")
+    if not folder_id:
+        raise ValueError("GOOGLE_DRIVE_FOLDER_ID environment variable required")
+
+    cred = service_account.Credentials.from_service_account_info(
+        json.loads(service_key), scopes=["https://www.googleapis.com/auth/drive.readonly"]
+    )
+    service = build("drive", "v3", credentials=cred)
+
+    all_files = []
+    page_token = None
+    while True:
+        r = service.files().list(
+            q=f"'{folder_id}' in parents and mimeType contains 'image/'",
+            fields="files(id, name)", pageSize=200, pageToken=page_token
+        ).execute()
+        all_files.extend(r.get("files", []))
+        page_token = r.get("nextPageToken")
+        if not page_token:
+            break
+
+    if not all_files:
+        raise RuntimeError(f"No image files found in Google Drive folder: {folder_id}")
+
+    used_log = Path("used_images.json")
+    usage = {}
+    if used_log.exists():
         try:
-            r = requests.get(url, headers=headers, timeout=180)
-            if r.status_code == 402:
-                print(f"[image] 402 - warte 30s und wiederhole...")
-                time.sleep(30)
-                continue
-            r.raise_for_status()
-            if len(r.content) < 1000:
-                raise ValueError("Image too small")
-            out.write_bytes(r.content)
-            print(f"[image] ✅ Bild {idx+1}: {len(r.content)//1024}KB")
-            time.sleep(3)
-            return out
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 402:
-                print(f"[image] 402 - warte 30s und wiederhole...")
-                time.sleep(30)
-                continue
-            if attempt < 4:
-                time.sleep((attempt + 1) * 10)
-        except Exception as e:
-            if attempt < 4:
-                time.sleep((attempt + 1) * 10)
-            else:
-                break
-    
-    raise Exception(f"Bild {idx+1} konnte nicht generiert werden (API Error)")
+            usage = json.loads(used_log.read_text())
+        except Exception:
+            usage = {}
+
+    for f in all_files:
+        if f["name"] not in usage:
+            usage[f["name"]] = 0
+
+    min_usage = min(usage.values())
+    weights = [1.0 / (usage[f["name"]] - min_usage + 1) for f in all_files]
+    chosen = random.choices(all_files, weights=weights, k=1)[0]
+    usage[chosen["name"]] += 1
+    used_log.write_text(json.dumps(usage, indent=2))
+
+    print(f"[image] Loading image from Google Drive: {chosen['name']} ...", flush=True)
+    request = service.files().get_media(fileId=chosen["id"])
+    from googleapiclient.http import MediaIoBaseDownload
+    import io
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+    fh.seek(0)
+    out.write_bytes(fh.read())
+    print(f"  Saved: {out.name} ({out.stat().st_size // 1024} KB)", flush=True)
+    return out
+
+def generate_image(scene: str, idx: int, topic: str = "") -> Path:
+    """Pick image randomly from Google Drive instead of AI generation."""
+    return download_image_from_drive(idx)
 
 def generate_images(scenes: list, topic: str = ""):
-    """Generate stickman images using Pollinations.ai API."""
-    print(f"[image] {NUM_IMAGES} Stickman-Bilder via Pollinations API...")
-    images = []
-    for i, scene in enumerate(scenes):
-        try:
-            img = generate_image(scene, i, topic)
+    """Download random images from Google Drive for each scene."""
+    print(f"[image] Downloading {NUM_IMAGES} random images from Google Drive...")
+    return [generate_image(scene, i, topic) for i, scene in enumerate(scenes)]
             images.append(img)
         except Exception as e:
             print(f"[image] ⚠️ Bild {i+1} fehlgeschlagen: {e}")
@@ -687,7 +748,7 @@ def generate_topic() -> str:
 def main():
     ensure_dirs()
 
-    topic = generate_topic()
+    topic = choose_topic_for_today()
     print("=" * 60)
     print(f"=== Topic: {topic}")
     print("=" * 60)

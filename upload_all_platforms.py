@@ -42,26 +42,26 @@ def main():
         story = story_file.read_text(encoding='utf-8')
         # Use first sentence as title
         title_parts = story.split('.')
-        title = title_parts[0][:100] if title_parts else "Добрая сказка для детей"
+        title = title_parts[0][:100] if title_parts else "Психология и Самопомощь"
         # Use first 2-3 sentences as description snippet
         story_snippet = ". ".join(title_parts[:3])[:300] if len(title_parts) > 2 else story[:300]
     else:
-        title = f"Добрая сказка для детей - {datetime.date.today()}"
+        title = f"Психология и Самопомощь - {datetime.date.today()}"
         story_snippet = ""
     
     desc_parts = [story_snippet] if story_snippet else []
     desc_parts.append(
-        "Подпишись на ежедневные добрые сказки! 🐻"
+        "Подпишись на ежедневные советы по психологии и самопомощи!"
     )
     desc_parts.append(
-        "#СказкиДляДетей #ДобрыеСказки #Животные #ДетскиеСказки #СказкаНаНочь #ДляДетей #Мораль #УрокДоброты #Shorts"
+        "#Психология #Самопомощь #Мотивация #Саморазвитие #ЭмоциональныйИнтеллект #Самооценка #Продуктивность #Shorts"
     )
     description = "\n\n".join(desc_parts)
     
     tags = [
-        'Сказки для Детей', 'Детские Сказки', 'Животные', 'Добрые Истории',
-        'Сказка На Ночь', 'Обучение', 'Для Малышей', 'Мораль', 'Дружба',
-        'Shorts', 'Анимация', 'Русские Сказки', 'Познавательное'
+        'Психология', 'Самопомощь', 'Мотивация', 'Саморазвитие',
+        'Эмоциональный Интеллект', 'Самооценка', 'Для Взрослых', 'Позитивная Психология', 'Продуктивность',
+        'Shorts', 'Русский', 'Психология Жизни', 'Саморазвитие'
     ]
     
     results = {}
