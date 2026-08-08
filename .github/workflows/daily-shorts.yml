@@ -3,10 +3,6 @@
 on:
   schedule:
     - cron: "0 4 * * *"      # Run 1 â€” 4:00 AM UTC
-    - cron: "0 8 * * *"      # Run 2 â€” 8:00 AM UTC
-    - cron: "0 12 * * *"     # Run 3 â€” 12:00 PM UTC
-    - cron: "0 16 * * *"     # Run 4 â€” 4:00 PM UTC (original)
-    - cron: "0 20 * * *"     # Run 5 â€” 8:00 PM UTC
   workflow_dispatch:
 
 jobs:
