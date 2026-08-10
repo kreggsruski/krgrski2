@@ -423,7 +423,10 @@ def generate_image(scene: str, idx: int, topic: str = "") -> Path:
 def generate_images(scenes: list, topic: str = ""):
     """Download random images from Google Drive for each scene."""
     print(f"[image] Downloading {NUM_IMAGES} random images from Google Drive...")
-    return [generate_image(scene, i, topic) for i, scene in enumerate(scenes)]
+    images = []
+    for i, scene in enumerate(scenes):
+        try:
+            img = generate_image(scene, i, topic)
             images.append(img)
         except Exception as e:
             print(f"[image] ⚠️ Bild {i+1} fehlgeschlagen: {e}")
