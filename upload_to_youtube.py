@@ -1,4 +1,4 @@
-"""
+﻿"""
 YouTube Upload Script - Updated for 2025
 
 Uses refresh token from GitHub Secrets to upload videos.
@@ -83,7 +83,7 @@ def upload_to_youtube(video_file, title, description, tags, category_id='22'):
         if status:
             print(f"[youtube] Progress: {int(status.progress() * 100)}%")
     
-    print(f"[youtube] ✅ Uploaded! Video ID: {response['id']}")
+    print(f"[youtube] âœ… Uploaded! Video ID: {response['id']}")
     print(f"[youtube] URL: https://youtube.com/shorts/{response['id']}")
     
     return response
@@ -93,7 +93,7 @@ def main():
     video_file = Path('output/final_video.mp4')
     
     if not video_file.exists():
-        print("[youtube] ❌ No video found at output/final_video.mp4")
+        print("[youtube] âŒ No video found at output/final_video.mp4")
         return
     
     # Read the topic from used_topics.txt (last line is the current topic)
@@ -110,7 +110,7 @@ def main():
     if topic:
         title = topic
     else:
-        title = "Психология и Самопомощь"
+        title = "ÐŸÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ Ð¸ Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ"
     
     # Read story for description snippet
     story_text = ""
@@ -120,17 +120,17 @@ def main():
     
     desc_parts = [story_text] if story_text else []
     desc_parts.append(
-        "Подпишись на ежедневные советы по психологии и самопомощи!"
+        "ÐŸÐ¾Ð´Ð¿Ð¸ÑˆÐ¸ÑÑŒ Ð½Ð° ÐµÐ¶ÐµÐ´Ð½ÐµÐ²Ð½Ñ‹Ðµ ÑÐ¾Ð²ÐµÑ‚Ñ‹ Ð¿Ð¾ Ð¿ÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ð¸ Ð¸ ÑÐ°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰Ð¸!"
     )
     desc_parts.append(
-        "#Психология #Самопомощь #Мотивация #Саморазвитие #ЭмоциональныйИнтеллект #Самооценка #Продуктивность #Shorts"
+        "#ÐŸÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ #Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ #ÐœÐ¾Ñ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ #Ð¡Ð°Ð¼Ð¾Ñ€Ð°Ð·Ð²Ð¸Ñ‚Ð¸Ðµ #Ð­Ð¼Ð¾Ñ†Ð¸Ð¾Ð½Ð°Ð»ÑŒÐ½Ñ‹Ð¹Ð˜Ð½Ñ‚ÐµÐ»Ð»ÐµÐºÑ‚ #Ð¡Ð°Ð¼Ð¾Ð¾Ñ†ÐµÐ½ÐºÐ° #ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¸Ð²Ð½Ð¾ÑÑ‚ÑŒ #Shorts"
     )
     description = "\n\n".join(desc_parts)
     
     tags = [
-        'Психология', 'Самопомощь', 'Мотивация', 'Саморазвитие',
-        'Эмоциональный Интеллект', 'Самооценка', 'Для Взрослых', 'Позитивная Психология', 'Продуктивность',
-        'Shorts', 'Анимация', 'Русские Сказки', 'Познавательное'
+        'ÐŸÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ', 'Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ', 'ÐœÐ¾Ñ‚Ð¸Ð²Ð°Ñ†Ð¸Ñ', 'Ð¡Ð°Ð¼Ð¾Ñ€Ð°Ð·Ð²Ð¸Ñ‚Ð¸Ðµ',
+        'Ð­Ð¼Ð¾Ñ†Ð¸Ð¾Ð½Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð˜Ð½Ñ‚ÐµÐ»Ð»ÐµÐºÑ‚', 'Ð¡Ð°Ð¼Ð¾Ð¾Ñ†ÐµÐ½ÐºÐ°', 'Ð”Ð»Ñ Ð’Ð·Ñ€Ð¾ÑÐ»Ñ‹Ñ…', 'ÐŸÐ¾Ð·Ð¸Ñ‚Ð¸Ð²Ð½Ð°Ñ ÐŸÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ', 'ÐŸÑ€Ð¾Ð´ÑƒÐºÑ‚Ð¸Ð²Ð½Ð¾ÑÑ‚ÑŒ',
+        'Shorts', 'ÐÐ½Ð¸Ð¼Ð°Ñ†Ð¸Ñ', 'Ð ÑƒÑÑÐºÐ¸Ðµ Ð¡ÐºÐ°Ð·ÐºÐ¸', 'ÐŸÐ¾Ð·Ð½Ð°Ð²Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ðµ'
     ]
     
     # Upload
@@ -143,7 +143,7 @@ def main():
             category_id='22'
         )
     except Exception as e:
-        print(f"[youtube] ❌ Upload failed: {e}")
+        print(f"[youtube] âŒ Upload failed: {e}")
         raise
 
 if __name__ == '__main__':
