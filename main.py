@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import datetime
 import subprocess
@@ -17,7 +17,7 @@ POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY")
 # LANGUAGE SETTINGS (Change this for different languages)
 LANGUAGE_CONFIG = {
     "name": "Russian",
-    "native_name": "на русском языке",
+    "native_name": "Ð½Ð° Ñ€ÑƒÑÑÐºÐ¾Ð¼ ÑÐ·Ñ‹ÐºÐµ",
     "voice": "ru-RU-SvetlanaNeural",
     "vosk_model": "vosk-model-small-ru-0.22",
     "vosk_url": "https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip",
@@ -84,7 +84,7 @@ def refill_topics_if_needed():
     if remaining >= MIN_TOPICS_THRESHOLD:
         return
 
-    print(f"[topics] ⚠️ Only {remaining} topics left (threshold: {MIN_TOPICS_THRESHOLD}). Auto-refilling...")
+    print(f"[topics] âš ï¸ Only {remaining} topics left (threshold: {MIN_TOPICS_THRESHOLD}). Auto-refilling...")
 
     used = set()
     if os.path.exists("used_topics.txt"):
@@ -114,7 +114,7 @@ def refill_topics_if_needed():
                 seen.add(tl)
 
     save_topics_to_file(combined, filename=TOPICS_FILE)
-    print(f"[topics] ✅ Refilled: now have {len(combined)} topics")
+    print(f"[topics] âœ… Refilled: now have {len(combined)} topics")
 
 def get_all_used_topics():
     """Get all previously used topics to prevent duplicates."""
@@ -143,7 +143,7 @@ def choose_topic_for_today():
         print(f"[topics] Loaded {len(topics)} topics")
     except Exception as e:
         print(f"[topics] ERROR reading {TOPICS_FILE}: {e}")
-        return "Самопомощь и позитивная психология"
+        return "Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ Ð¸ Ð¿Ð¾Ð·Ð¸Ñ‚Ð¸Ð²Ð½Ð°Ñ Ð¿ÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ"
 
     if len(topics) < 30:
         print(f"[topics] Only {len(topics)} topics left. Generating 100 new unique topics...")
@@ -179,7 +179,7 @@ def choose_topic_for_today():
 
     if not topics:
         print("[topics] No topics available! Using fallback.")
-        return "Самопомощь и позитивная психология"
+        return "Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ Ð¸ Ð¿Ð¾Ð·Ð¸Ñ‚Ð¸Ð²Ð½Ð°Ñ Ð¿ÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ"
 
     selected_topic = topics[0]
     remaining_topics = topics[1:]
@@ -235,7 +235,7 @@ def generate_story_with_pollinations(topic: str) -> str:
     print(f"[story] Generating self-help text ({lang_name}): {topic}")
     
     if not POLLINATIONS_API_KEY:
-        raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
+        raise ValueError("âŒ POLLINATIONS_API_KEY is missing!")
 
     max_retries = 3
     headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
@@ -249,7 +249,7 @@ def generate_story_with_pollinations(topic: str) -> str:
             words = text.split()
             
             if len(words) < 50:
-                print(f"[story] ⚠️ Too short ({len(words)} words), retrying {attempt + 1}/{max_retries}...")
+                print(f"[story] âš ï¸ Too short ({len(words)} words), retrying {attempt + 1}/{max_retries}...")
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     continue
@@ -263,23 +263,23 @@ def generate_story_with_pollinations(topic: str) -> str:
             with open(STORY_FILE, "w", encoding="utf-8") as f:
                 f.write(text)
 
-            print(f"[story] ✅ Generated ({len(words)} words)")
+            print(f"[story] âœ… Generated ({len(words)} words)")
             return text
             
         except Exception as e:
-            print(f"[story] ❌ Error attempt {attempt + 1}/{max_retries}: {e}")
+            print(f"[story] âŒ Error attempt {attempt + 1}/{max_retries}: {e}")
             if attempt < max_retries - 1:
                 time.sleep(3)
             else:
                 fallback = (
-                    f"Иногда мы забываем, насколько мы сильны на самом деле. {topic} "
-                    f"Можно позволить себе время. Можно сказать нет. "
-                    f"Чувства важны. Потребности имеют значение. "
-                    f"Каждый день — это новый шанс стать ближе к себе. "
-                    f"Будьте нежны с собой. Растите в своём темпе. "
-                    f"Вы достаточны, именно такие, какие есть."
+                    f"Ð˜Ð½Ð¾Ð³Ð´Ð° Ð¼Ñ‹ Ð·Ð°Ð±Ñ‹Ð²Ð°ÐµÐ¼, Ð½Ð°ÑÐºÐ¾Ð»ÑŒÐºÐ¾ Ð¼Ñ‹ ÑÐ¸Ð»ÑŒÐ½Ñ‹ Ð½Ð° ÑÐ°Ð¼Ð¾Ð¼ Ð´ÐµÐ»Ðµ. {topic} "
+                    f"ÐœÐ¾Ð¶Ð½Ð¾ Ð¿Ð¾Ð·Ð²Ð¾Ð»Ð¸Ñ‚ÑŒ ÑÐµÐ±Ðµ Ð²Ñ€ÐµÐ¼Ñ. ÐœÐ¾Ð¶Ð½Ð¾ ÑÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð½ÐµÑ‚. "
+                    f"Ð§ÑƒÐ²ÑÑ‚Ð²Ð° Ð²Ð°Ð¶Ð½Ñ‹. ÐŸÐ¾Ñ‚Ñ€ÐµÐ±Ð½Ð¾ÑÑ‚Ð¸ Ð¸Ð¼ÐµÑŽÑ‚ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ. "
+                    f"ÐšÐ°Ð¶Ð´Ñ‹Ð¹ Ð´ÐµÐ½ÑŒ â€” ÑÑ‚Ð¾ Ð½Ð¾Ð²Ñ‹Ð¹ ÑˆÐ°Ð½Ñ ÑÑ‚Ð°Ñ‚ÑŒ Ð±Ð»Ð¸Ð¶Ðµ Ðº ÑÐµÐ±Ðµ. "
+                    f"Ð‘ÑƒÐ´ÑŒÑ‚Ðµ Ð½ÐµÐ¶Ð½Ñ‹ Ñ ÑÐ¾Ð±Ð¾Ð¹. Ð Ð°ÑÑ‚Ð¸Ñ‚Ðµ Ð² ÑÐ²Ð¾Ñ‘Ð¼ Ñ‚ÐµÐ¼Ð¿Ðµ. "
+                    f"Ð’Ñ‹ Ð´Ð¾ÑÑ‚Ð°Ñ‚Ð¾Ñ‡Ð½Ñ‹, Ð¸Ð¼ÐµÐ½Ð½Ð¾ Ñ‚Ð°ÐºÐ¸Ðµ, ÐºÐ°ÐºÐ¸Ðµ ÐµÑÑ‚ÑŒ."
                 )
-                print(f"[story] ⚠️ Using fallback")
+                print(f"[story] âš ï¸ Using fallback")
                 with open(STORY_FILE, "w", encoding="utf-8") as f:
                     f.write(fallback)
                 return fallback
@@ -309,7 +309,7 @@ def generate_visual_prompts(story: str) -> list:
     
     try:
         if not POLLINATIONS_API_KEY:
-            raise ValueError("❌ POLLINATIONS_API_KEY is missing!")
+            raise ValueError("âŒ POLLINATIONS_API_KEY is missing!")
 
         headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
         r = requests.get(final_url, params={"model": "openai", "temperature": 1.3, "seed": random.randint(1, 999999)}, headers=headers, timeout=60)
@@ -429,7 +429,7 @@ def generate_images(scenes: list, topic: str = ""):
             img = generate_image(scene, i, topic)
             images.append(img)
         except Exception as e:
-            print(f"[image] ⚠️ Bild {i+1} fehlgeschlagen: {e}")
+            print(f"[image] âš ï¸ Bild {i+1} fehlgeschlagen: {e}")
             from PIL import Image, ImageDraw, ImageFont, ImageFilter
             placeholder = IMAGES_DIR / f"scene_{i:02d}.jpg"
             img = Image.new('RGB', (IMAGE_WIDTH, IMAGE_HEIGHT), (255, 255, 255))
@@ -745,12 +745,12 @@ def main():
     
     # VALIDATION: Check audio duration to prevent short videos
     audio_duration = get_audio_duration(NARRATION_FILE)
-    print(f"[validation] 🎵 Audio duration: {audio_duration:.2f} seconds")
+    print(f"[validation] ðŸŽµ Audio duration: {audio_duration:.2f} seconds")
     
     if audio_duration < 10:
-        raise ValueError(f"❌ Audio too short ({audio_duration:.2f}s)! Minimum 10 seconds required. Check story and TTS generation.")
+        raise ValueError(f"âŒ Audio too short ({audio_duration:.2f}s)! Minimum 10 seconds required. Check story and TTS generation.")
     
-    print(f"[validation] ✅ Audio duration valid ({audio_duration:.2f}s)")
+    print(f"[validation] âœ… Audio duration valid ({audio_duration:.2f}s)")
     
     # 5. Generate word-level UPPERCASE subtitles with Vosk
     generate_word_subtitles()
@@ -765,8 +765,8 @@ def main():
     merge_audio()
 
     print("=" * 60)
-    print(f"✅ DONE. Video ready: {FINAL_VIDEO}")
-    print(f"📊 Final duration: {audio_duration:.2f} seconds")
+    print(f"âœ… DONE. Video ready: {FINAL_VIDEO}")
+    print(f"ðŸ“Š Final duration: {audio_duration:.2f} seconds")
     print("=" * 60)
 
 
