@@ -49,6 +49,15 @@ def main():
         title = f"Психология и Самопомощь - {datetime.date.today()}"
         story_snippet = ""
     
+    # Sanitize title for YouTube (max 100 chars, strip invalid chars)
+    title = title.replace("\n", " ").replace("\r", " ").replace("\t", " ")
+    title = " ".join(title.split())
+    title = title.strip("|-–— ")
+    if len(title) > 100:
+        title = title[:97] + "..."
+    if not title or len(title.strip()) < 2:
+        title = "Психология и Самопомощь"
+    
     desc_parts = [story_snippet] if story_snippet else []
     desc_parts.append(
         "Подпишись на ежедневные советы по психологии и самопомощи!"
