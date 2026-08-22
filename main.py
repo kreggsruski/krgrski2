@@ -130,87 +130,37 @@ def get_all_used_topics():
     return used
 
 def choose_topic_for_today():
-    """Select and consume a topic from topics.txt. Auto-generates new unique topics when running low."""
+    """Pick a topic that has NOT been used yet (history persisted via git commit)."""
+    import os, datetime, random
+    TOPICS_FILE = "topics.txt"
     if not os.path.exists(TOPICS_FILE):
-        print(f"[topics] {TOPICS_FILE} not found! Generating initial topics...")
-        from generate_topics import generate_russian_selfhelp_topics, save_topics_to_file
-        new_topics = generate_russian_selfhelp_topics(100)
-        save_topics_to_file(new_topics)
-
-    try:
-        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
-            topics = [line.strip() for line in f if line.strip()]
-        print(f"[topics] Loaded {len(topics)} topics")
-    except Exception as e:
-        print(f"[topics] ERROR reading {TOPICS_FILE}: {e}")
-        return "Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ Ð¸ Ð¿Ð¾Ð·Ð¸Ñ‚Ð¸Ð²Ð½Ð°Ñ Ð¿ÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ"
-
-    if len(topics) < 30:
-        print(f"[topics] Only {len(topics)} topics left. Generating 100 new unique topics...")
-        from generate_topics import generate_russian_selfhelp_topics
-
-        used_topics = get_all_used_topics()
-        existing_topics_lower = set(t.lower() for t in topics)
-        all_existing = used_topics.union(existing_topics_lower)
-
-        print(f"[topics] Already used/existing: {len(all_existing)} topics")
-        attempts = 0
-        new_unique_topics = []
-        while len(new_unique_topics) < 100 and attempts < 5:
-            batch = generate_russian_selfhelp_topics(150)
-            for topic in batch:
-                if topic.lower() not in all_existing:
-                    new_unique_topics.append(topic)
-                    all_existing.add(topic.lower())
-                    if len(new_unique_topics) >= 100:
-                        break
-            attempts += 1
-
-        print(f"[topics] Generated {len(new_unique_topics)} unique new topics (0 duplicates)")
-        topics.extend(new_unique_topics)
-        try:
-            with open(TOPICS_FILE, "w", encoding="utf-8") as f:
-                f.write("\n".join(topics) + "\n")
-                f.flush()
-                os.fsync(f.fileno())
-            print(f"[topics] Now {len(topics)} topics available")
-        except Exception as e:
-            print(f"[topics] ERROR saving new topics: {e}")
-
-    if not topics:
-        print("[topics] No topics available! Using fallback.")
-        return "Ð¡Ð°Ð¼Ð¾Ð¿Ð¾Ð¼Ð¾Ñ‰ÑŒ Ð¸ Ð¿Ð¾Ð·Ð¸Ñ‚Ð¸Ð²Ð½Ð°Ñ Ð¿ÑÐ¸Ñ…Ð¾Ð»Ð¾Ð³Ð¸Ñ"
-
-    selected_topic = topics[0]
-    remaining_topics = topics[1:]
-
-    print(f"[topics] Topic selected: {selected_topic}")
-    print(f"[topics] Remaining: {len(remaining_topics)}")
-
-    try:
-        with open(TOPICS_FILE, "w", encoding="utf-8") as f:
-            f.write("\n".join(remaining_topics) + "\n")
-            f.flush()
-            os.fsync(f.fileno())
-        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
-            verification = [line.strip() for line in f if line.strip()]
-        if selected_topic in verification:
-            print(f"[topics] WARNING: Topic still in file after removal!")
-        else:
-            print(f"[topics] Topic successfully removed from topics.txt")
-    except Exception as e:
-        print(f"[topics] ERROR updating {TOPICS_FILE}: {e}")
-
-    try:
-        today = datetime.datetime.now()
-        with open("used_topics.txt", "a", encoding="utf-8") as f:
-            f.write(f"{today.strftime('%Y-%m-%d')}: {selected_topic}\n")
-            f.flush()
-        print(f"[topics] Topic logged to used_topics.txt")
-    except Exception as e:
-        print(f"[topics] WARNING: Could not log topic: {e}")
-
+        return "Default Topic"
+    with open(TOPICS_FILE, "r", encoding="utf-8") as f:
+        all_topics = [line.strip() for line in f if line.strip()]
+    if not all_topics:
+        return "Default Topic"
+    used_file = "used_topics.txt"
+    used = set()
+    if os.path.exists(used_file):
+        with open(used_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                topic = line.split(":", 1)[1].strip() if ":" in line else line
+                if topic:
+                    used.add(topic)
+    remaining = [t for t in all_topics if t not in used]
+    if not remaining:
+        remaining = list(all_topics)
+        used = set()
+        open(used_file, "w", encoding="utf-8").close()
+    selected_topic = random.choice(remaining)
+    with open(used_file, "a", encoding="utf-8") as f:
+        f.write(f"{datetime.date.today()}: {selected_topic}\n")
+    print(f"[topics] Selected: {selected_topic} (pool={len(all_topics)}, used={len(used)})")
     return selected_topic
+
 
 def generate_story_with_pollinations(topic: str) -> str:
     """Generate a self-help / psychological reflection in Russian for adults."""
